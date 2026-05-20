@@ -579,15 +579,15 @@
 
   <!-- HEADER -->
   <header>
-    <div class="badge">APA 6th Edition · Reference Formatter</div>
+    <div class="badge">APA 6th Edition · Powered by Gemini · Free</div>
     <h1>Refine<span>Ref</span></h1>
     <p class="tagline">Fix your references. All of them. Instantly.</p>
   </header>
 
   <!-- API KEY -->
   <div class="api-section">
-    <span class="api-label">API Key</span>
-    <input class="api-input" type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off" />
+    <span class="api-label">Gemini API Key</span>
+    <input class="api-input" type="password" id="api-key" placeholder="AIza..." autocomplete="off" />
     <button class="clear-btn" onclick="clearAll()">Clear Data</button>
   </div>
 
@@ -661,7 +661,7 @@
     </div>
   </div>
 
-  <footer>RefineRef · Powered by Claude · API key stays in memory only</footer>
+  <footer>RefineRef · Powered by Gemini 1.5 Flash · Free tier · API key stays in memory only</footer>
 
 </div>
 
@@ -811,24 +811,20 @@
       for (let i = 0; i < chunks.length; i++) {
         $('progress-label').textContent = `Formatting chunk ${i + 1} of ${chunks.length}...`;
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4000,
-            system: `You are an APA 6th edition reference formatting expert. The user will give you a list of references extracted from a Word document. Your job is to:
+        const systemPrompt = `You are an APA 6th edition reference formatting expert. The user will give you a list of references extracted from a Word document. Your job is to:
 1. Identify each individual reference entry in the text
 2. Reformat every single one to strictly correct APA 6th edition format
 3. Number each corrected reference sequentially
 4. If you are unsure about any entry (missing info, ambiguous format, can't identify type), add a ⚠️ flag on the same line after the reference with a brief note in parentheses explaining the issue
-5. Return ONLY the numbered, formatted reference list — no preamble, no commentary, no markdown formatting, no extra text`,
-            messages: [{ role: 'user', content: `Please reformat these references to APA 6th edition:\n\n${chunks[i]}` }]
+5. Return ONLY the numbered, formatted reference list — no preamble, no commentary, no markdown formatting, no extra text`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: `Please reformat these references to APA 6th edition:\n\n${chunks[i]}` }] }],
+            generationConfig: { maxOutputTokens: 4000, temperature: 0.1 }
           })
         });
 
@@ -838,7 +834,7 @@
         }
 
         const data = await response.json();
-        const text = data.content.map(b => b.text || '').join('');
+        const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
         allFormatted.push(text.trim());
       }
 

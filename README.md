@@ -1,4 +1,4 @@
-# RefineRef1
+# RefineRef
 
 > Fix your references. All of them. Instantly.
 
@@ -46,7 +46,7 @@ No server required. The app runs entirely in the browser.
 ## Requirements
 
 - A modern browser
-- An [Anthropic API key](https://console.anthropic.com/) (you pay only for what you use; typical usage costs a few cents per run)
+- A free [Gemini API key](https://aistudio.google.com/app/apikey) from Google AI Studio — no credit card, no billing required
 - A `.docx` file containing your references
 
 ---
@@ -75,7 +75,7 @@ No server required. The app runs entirely in the browser.
 |---|---|
 | UI | Vanilla HTML, CSS, JavaScript |
 | Document parsing | [Mammoth.js](https://github.com/mwilliamson/mammoth.js) |
-| AI formatting | [Anthropic Claude API](https://docs.anthropic.com) |
+| AI formatting | [Google Gemini 1.5 Flash API](https://aistudio.google.com) (free tier) |
 | Fonts | Syne, DM Sans, JetBrains Mono (Google Fonts) |
 | Hosting | GitHub Pages (optional) |
 
