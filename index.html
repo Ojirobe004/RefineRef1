@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefineRef — APA 6th Edition Formatter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --amber-glow: rgba(245,166,35,0.25);
+    --text: #f0ede8;
+    --text-muted: #7a7880;
+    --text-dim: #3d3b45;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --warning: #f39c12;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Amber glow orb */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(245,166,35,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 56px 0 48px;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    background: var(--amber-dim);
+    border: 1px solid rgba(245,166,35,0.2);
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 7vw, 72px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    color: var(--amber);
+  }
+
+  .tagline {
+    font-size: 16px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    max-width: 400px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+
+  /* ── API KEY SECTION ── */
+  .api-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .api-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .api-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .api-input:focus { border-color: var(--amber); }
+  .api-input::placeholder { color: var(--text-dim); }
+
+  .clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .clear-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 1.5px dashed var(--border-hover);
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    background: var(--bg2);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(245,166,35,0.04), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .upload-zone:hover::before,
+  .upload-zone.drag-over::before { opacity: 1; }
+
+  .upload-zone:hover,
+  .upload-zone.drag-over {
+    border-color: var(--amber);
+    border-style: dashed;
+  }
+
+  .upload-zone.drag-over {
+    background: var(--bg3);
+  }
+
+  @keyframes border-dance {
+    0%, 100% { border-color: var(--amber); }
+    50% { border-color: rgba(245,166,35,0.4); }
+  }
+
+  .upload-zone.drag-over {
+    animation: border-dance 1s infinite;
+  }
+
+  .upload-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    background: var(--amber-dim);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .upload-icon svg {
+    width: 26px;
+    height: 26px;
+    stroke: var(--amber);
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .upload-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .upload-btn {
+    background: var(--amber);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .upload-btn:hover {
+    background: #ffc04a;
+    transform: translateY(-1px);
+  }
+
+  #file-input { display: none; }
+
+  /* ── FILE LOADED STATE ── */
+  .file-loaded {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg2);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+
+  .file-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--amber-dim);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .file-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--amber);
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .file-info { flex: 1; }
+  .file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .file-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .remove-file {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .remove-file:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── RUN BUTTON ── */
+  .run-btn {
+    width: 100%;
+    background: var(--amber);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 12px;
+    padding: 18px;
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .run-btn:hover:not(:disabled) {
+    background: #ffc04a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(245,166,35,0.3);
+  }
+
+  .run-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .run-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: #0a0a0f;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    background: var(--bg3);
+    border-radius: 100px;
+    height: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--amber);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  @keyframes shimmer {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    90% { width: 90%; }
+    100% { width: 90%; }
+  }
+
+  .progress-bar.indeterminate {
+    animation: shimmer 2s ease forwards;
+  }
+
+  .progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  /* ── OUTPUT ── */
+  .output-section {
+    margin-bottom: 40px;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .output-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid rgba(245,166,35,0.2);
+    padding: 2px 10px;
+    border-radius: 100px;
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .action-btn:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .output-terminal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .terminal-bar {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border-hover);
+  }
+  .terminal-dot:nth-child(1) { background: #ff5f57; }
+  .terminal-dot:nth-child(2) { background: #febc2e; }
+  .terminal-dot:nth-child(3) { background: #28c840; }
+
+  .terminal-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 6px;
+  }
+
+  .output-content {
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .output-content::-webkit-scrollbar { width: 6px; }
+  .output-content::-webkit-scrollbar-track { background: transparent; }
+  .output-content::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
+
+  .ref-line { display: block; padding: 3px 0; }
+  .ref-line.flagged { color: #f5a623; }
+  .ref-line .flag-note { color: var(--warning); font-size: 11px; }
+
+  /* ── ERROR / INFO ── */
+  .message {
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .message.error { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.25); color: #e74c3c; }
+  .message.info { background: var(--amber-dim); border: 1px solid rgba(245,166,35,0.2); color: var(--amber); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.35s ease forwards; }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spin { animation: spin 1s linear infinite; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="badge">APA 6th Edition · Reference Formatter</div>
+    <h1>Refine<span>Ref</span></h1>
+    <p class="tagline">Fix your references. All of them. Instantly.</p>
+  </header>
+
+  <!-- API KEY -->
+  <div class="api-section">
+    <span class="api-label">API Key</span>
+    <input class="api-input" type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off" />
+    <button class="clear-btn" onclick="clearAll()">Clear Data</button>
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </div>
+    <p class="upload-title">Drop your Word document here</p>
+    <p class="upload-sub">Upload your .docx file with references from Chapter 1–3.<br>All entries will be reformatted to APA 6th edition.</p>
+    <button class="upload-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Browse Files</button>
+    <input type="file" id="file-input" accept=".docx" />
+  </div>
+
+  <!-- FILE LOADED -->
+  <div class="file-loaded hidden fade-in" id="file-loaded">
+    <div class="file-icon">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    <div class="file-info">
+      <div class="file-name" id="file-name-display">document.docx</div>
+      <div class="file-meta" id="file-meta-display">Ready to process</div>
+    </div>
+    <button class="remove-file" onclick="resetFile()">Remove</button>
+  </div>
+
+  <!-- ERROR -->
+  <div class="message error hidden" id="error-msg"></div>
+  <div class="message info hidden" id="info-msg"></div>
+
+  <!-- RUN BUTTON -->
+  <button class="run-btn" id="run-btn" onclick="runFormatter()" disabled>
+    <svg id="run-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <span id="run-label">Format References</span>
+  </button>
+
+  <!-- PROGRESS -->
+  <div id="progress-section" class="hidden">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar indeterminate" id="progress-bar"></div>
+    </div>
+    <div class="progress-label" id="progress-label">Extracting text from document...</div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-section hidden fade-in" id="output-section">
+    <div class="output-header">
+      <div class="output-title">
+        Formatted References
+        <span class="count-badge" id="ref-count">0 entries</span>
+      </div>
+      <div class="output-actions">
+        <button class="action-btn" onclick="copyAll()">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy All
+        </button>
+        <button class="action-btn" onclick="downloadTxt()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download .txt
+        </button>
+      </div>
+    </div>
+    <div class="output-terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+        <span class="terminal-label">refineref — output</span>
+      </div>
+      <div class="output-content" id="output-content"></div>
+    </div>
+  </div>
+
+  <footer>RefineRef · Powered by Claude · API key stays in memory only</footer>
+
+</div>
+
+<script>
+  let uploadedFile = null;
+  let extractedText = '';
+  let formattedOutput = '';
+
+  const $ = id => document.getElementById(id);
+
+  // ── DRAG AND DROP ──
+  const zone = $('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  $('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.name.endsWith('.docx')) {
+      showError('Please upload a .docx Word document.');
+      return;
+    }
+    uploadedFile = file;
+    $('upload-zone').classList.add('hidden');
+    $('file-loaded').classList.remove('hidden');
+    $('file-name-display').textContent = file.name;
+    $('file-meta-display').textContent = (file.size / 1024).toFixed(1) + ' KB · .docx';
+    hideError();
+    updateRunBtn();
+  }
+
+  function resetFile() {
+    uploadedFile = null;
+    extractedText = '';
+    $('file-input').value = '';
+    $('upload-zone').classList.remove('hidden');
+    $('file-loaded').classList.add('hidden');
+    $('output-section').classList.add('hidden');
+    updateRunBtn();
+  }
+
+  function updateRunBtn() {
+    const hasKey = $('api-key').value.trim().length > 20;
+    const hasFile = uploadedFile !== null;
+    $('run-btn').disabled = !(hasKey && hasFile);
+  }
+
+  $('api-key').addEventListener('input', updateRunBtn);
+
+  // ── SETTINGS PERSISTENCE (no API key) ──
+  function savePrefs() {
+    try { localStorage.setItem('refineref_prefs', JSON.stringify({ v: 1 })); } catch(e) {}
+  }
+
+  function clearAll() {
+    try { localStorage.removeItem('refineref_prefs'); } catch(e) {}
+    $('api-key').value = '';
+    resetFile();
+    hideError();
+    showInfo('All data cleared.');
+    setTimeout(() => $('info-msg').classList.add('hidden'), 3000);
+    updateRunBtn();
+  }
+
+  // ── MESSAGES ──
+  function showError(msg) {
+    $('error-msg').textContent = '⚠ ' + msg;
+    $('error-msg').classList.remove('hidden');
+    $('info-msg').classList.add('hidden');
+  }
+  function hideError() { $('error-msg').classList.add('hidden'); }
+  function showInfo(msg) {
+    $('info-msg').textContent = msg;
+    $('info-msg').classList.remove('hidden');
+    $('error-msg').classList.add('hidden');
+  }
+
+  // ── PROGRESS ──
+  function showProgress(label) {
+    $('progress-section').classList.remove('hidden');
+    $('progress-label').textContent = label;
+    $('progress-bar').style.width = '0%';
+    $('progress-bar').className = 'progress-bar indeterminate';
+  }
+  function setProgressDone() {
+    $('progress-bar').className = 'progress-bar';
+    $('progress-bar').style.width = '100%';
+  }
+  function hideProgress() { $('progress-section').classList.add('hidden'); }
+
+  // ── CHUNK TEXT ──
+  function chunkText(text, chunkSize = 6000) {
+    const lines = text.split('\n').filter(l => l.trim());
+    const chunks = [];
+    let current = [];
+    let len = 0;
+    for (const line of lines) {
+      if (len + line.length > chunkSize && current.length > 0) {
+        chunks.push(current.join('\n'));
+        current = [];
+        len = 0;
+      }
+      current.push(line);
+      len += line.length;
+    }
+    if (current.length > 0) chunks.push(current.join('\n'));
+    return chunks;
+  }
+
+  // ── MAIN FORMATTER ──
+  async function runFormatter() {
+    const apiKey = $('api-key').value.trim();
+    if (!apiKey) { showError('Please enter your Anthropic API key.'); return; }
+    if (!uploadedFile) { showError('Please upload a .docx file.'); return; }
+
+    $('run-btn').disabled = true;
+    $('output-section').classList.add('hidden');
+    hideError();
+    showProgress('Extracting text from document...');
+
+    const runIcon = $('run-icon');
+    runIcon.innerHTML = '<circle cx="12" cy="12" r="9" stroke-width="2" fill="none" stroke-dasharray="28 28" class="spin"/>';
+
+    try {
+      // Extract text with mammoth
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      extractedText = result.value;
+
+      if (!extractedText.trim()) {
+        throw new Error('No text could be extracted from this document.');
+      }
+
+      const chunks = chunkText(extractedText);
+      showProgress(`Processing ${chunks.length} chunk${chunks.length > 1 ? 's' : ''} through Claude...`);
+
+      const allFormatted = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        $('progress-label').textContent = `Formatting chunk ${i + 1} of ${chunks.length}...`;
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4000,
+            system: `You are an APA 6th edition reference formatting expert. The user will give you a list of references extracted from a Word document. Your job is to:
+1. Identify each individual reference entry in the text
+2. Reformat every single one to strictly correct APA 6th edition format
+3. Number each corrected reference sequentially
+4. If you are unsure about any entry (missing info, ambiguous format, can't identify type), add a ⚠️ flag on the same line after the reference with a brief note in parentheses explaining the issue
+5. Return ONLY the numbered, formatted reference list — no preamble, no commentary, no markdown formatting, no extra text`,
+            messages: [{ role: 'user', content: `Please reformat these references to APA 6th edition:\n\n${chunks[i]}` }]
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error?.message || `API error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data.content.map(b => b.text || '').join('');
+        allFormatted.push(text.trim());
+      }
+
+      formattedOutput = allFormatted.join('\n\n');
+      setProgressDone();
+      setTimeout(() => {
+        hideProgress();
+        renderOutput(formattedOutput);
+      }, 400);
+
+    } catch (err) {
+      hideProgress();
+      showError(err.message || 'Something went wrong. Check your API key and try again.');
+    } finally {
+      $('run-btn').disabled = false;
+      runIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+      updateRunBtn();
+    }
+  }
+
+  function renderOutput(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    const count = lines.filter(l => /^\d+\./.test(l.trim())).length;
+
+    $('ref-count').textContent = count + ' entr' + (count === 1 ? 'y' : 'ies');
+
+    const content = $('output-content');
+    content.innerHTML = '';
+
+    lines.forEach(line => {
+      const span = document.createElement('span');
+      span.className = 'ref-line' + (line.includes('⚠️') ? ' flagged' : '');
+      span.textContent = line;
+      content.appendChild(span);
+      content.appendChild(document.createTextNode('\n'));
+    });
+
+    $('output-section').classList.remove('hidden');
+    $('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── COPY / DOWNLOAD ──
+  function copyAll() {
+    navigator.clipboard.writeText(formattedOutput).then(() => {
+      showInfo('Copied to clipboard!');
+      setTimeout(() => $('info-msg').classList.add('hidden'), 2500);
+    });
+  }
+
+  function downloadTxt() {
+    const blob = new Blob([formattedOutput], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'refineref-apa6-formatted.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
